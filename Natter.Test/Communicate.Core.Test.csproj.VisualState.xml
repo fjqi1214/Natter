@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<VisualState xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" ShowCheckBoxes="false">
+  <TopNode>[0-1000]C:\Dev\Jabber\Communicate\Communicate.Core.Test\Communicate.Core.Test.csproj</TopNode>
+  <SelectedNode>[0-1013]Communicate.Core.Test.Messaging</SelectedNode>
+  <ExcludeCategories>false</ExcludeCategories>
+  <Nodes>
+    <Node UniqueName="[0-1000]C:\Dev\Jabber\Communicate\Communicate.Core.Test\Communicate.Core.Test.csproj" Expanded="true" />
+    <Node UniqueName="[0-1009]C:\Dev\Jabber\Communicate\Communicate.Core.Test\bin\Debug\Communicate.Core.Test.dll" Expanded="true" />
+    <Node UniqueName="[0-1010]Communicate" Expanded="true" />
+    <Node UniqueName="[0-1011]Communicate.Core" Expanded="true" />
+    <Node UniqueName="[0-1012]Communicate.Core.Test" Expanded="true" />
+    <Node UniqueName="[0-1013]Communicate.Core.Test.Messaging" Expanded="true" />
+    <Node UniqueName="[0-1001]Communicate.Core.Test.Messaging.FieldTests" Expanded="true" />
+    <Node UniqueName="[0-1005]Communicate.Core.Test.Messaging.MessageTests" Expanded="true" />
+  </Nodes>
+</VisualState>
