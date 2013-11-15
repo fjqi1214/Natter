@@ -3,25 +3,25 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Natter.Byte;
-using Natter.Connecting.States;
 using Natter.Messaging;
 using Natter.Transporting;
+using Natter.Connecting.States;
 
 namespace Natter.Connecting
 {
-    internal class Connection : IConnection, IConnectionActions, IDisposable
+    internal class NatterConnection : INatterConnection, IConnectionActions, IDisposable
     {
         private readonly ITransport _transport;
-        private byte[] _connectionId = new byte[0];
         private readonly StateManager _stateManager;
         private readonly byte[] _sourceAddress;
         private IAddress _destinationAddress;
         private readonly Timer _timer;
+        private bool _disposed;
 
-        private Action _onConnected;
-        private Action _onDisconnected;
-        private Action<Exception> _onError;
-        private Action<IField[]> _onData;
+        private Action<INatterConnection> _onConnected;
+        private Action<INatterConnection> _onDisconnected;
+        private Action<INatterConnection, Exception> _onError;
+        private Action<INatterConnection, IField[]> _onData;
 
         private const int PingPeriod = 1000;
 
@@ -38,10 +38,17 @@ namespace Natter.Connecting
             private set;
         }
 
-        public Connection(ITransport transport)
+        public byte[] ConnectionIdRaw
+        {
+            get;
+            private set;
+        }
+
+        public NatterConnection(ITransport transport, string connectionId)
         {
             _transport = transport;
-            ConnectionId = Guid.NewGuid().ToString();
+            ConnectionId = connectionId;
+            ConnectionIdRaw = connectionId.GetBytes();
             _stateManager = new StateManager(this);
             _sourceAddress = _transport.GetAddress().Serialise().GetBytes();
             _timer = new Timer(o => Ping(), null, PingPeriod, PingPeriod);
@@ -57,14 +64,9 @@ namespace Natter.Connecting
             _stateManager.Call();
         }
 
-        public void Listen()
+        public void HandleMessage(MessageType messageType, IMessage message)
         {
-            if (!StartStates.Contains(State))
-            {
-                throw new Exception("Invalid start state");
-            }
-            _transport.Listen(HandleMessage);
-            _stateManager.Listen();
+            _stateManager.ProcessMessage(messageType, message);
         }
 
         public void Send(IField[] data)
@@ -72,7 +74,7 @@ namespace Natter.Connecting
             _stateManager.Send(data);
         }
 
-        public void End()
+        public void Close()
         {
             _stateManager.End();
         }
@@ -81,10 +83,7 @@ namespace Natter.Connecting
         {
             try
             {
-                _transport.Listen(HandleMessage);
-
-                _connectionId = ConnectionId.GetBytes();
-                var message = MessageType.CreateStartMessage(_connectionId, transactionId, _sourceAddress);
+                var message = MessageType.CreateStartMessage(ConnectionIdRaw, transactionId, _sourceAddress);
 
                 SendMessage(message, _destinationAddress);
             }
@@ -99,9 +98,7 @@ namespace Natter.Connecting
             try
             {
                 _destinationAddress = _transport.DeserialiseAddress(originalMessage.From.GetString());
-                _connectionId = originalMessage.ConnectionId;
-
-                var message = MessageType.CreateOkMessage(_connectionId, originalMessage.TransactionId, _sourceAddress);
+                var message = MessageType.CreateOkMessage(ConnectionIdRaw, originalMessage.TransactionId, _sourceAddress);
                 SendMessage(message, _destinationAddress);
             }
             catch (Exception ex)
@@ -115,24 +112,8 @@ namespace Natter.Connecting
             try
             {
                 _transport.Listen(null);
-                var message = MessageType.CreateEndMessage(_connectionId, CreateNewId(), _sourceAddress);
+                var message = MessageType.CreateEndMessage(ConnectionIdRaw, CreateNewId(), _sourceAddress);
                 SendMessage(message, _destinationAddress);
-            }
-            catch (Exception ex)
-            {
-                OnError(ex);
-            }
-        }
-
-        private void HandleMessage(IMessage message)
-        {
-            try
-            {
-                if (true) //_connectionId.Length == 0 || ByteTools.Compare(message.ConnectionId, _connectionId))
-                {
-                    var messageType = MessageType.Parse(message.MessageType);
-                    _stateManager.ProcessMessage(messageType, message);
-                }
             }
             catch (Exception ex)
             {
@@ -149,7 +130,7 @@ namespace Natter.Connecting
         {
             try
             {
-                var message = MessageType.CreateDataMessage(_connectionId, CreateNewId(), _sourceAddress, data);
+                var message = MessageType.CreateDataMessage(ConnectionIdRaw, CreateNewId(), _sourceAddress, data);
                 SendMessage(message, _destinationAddress);
             }
             catch (Exception ex)
@@ -166,20 +147,20 @@ namespace Natter.Connecting
             }
             catch (Exception ex)
             {
-                End();
+                Close();
                 OnError(ex);
             }
         }
 
         public void SendPing(byte[] transactionId)
         {
-            var message = MessageType.CreatePingMessage(_connectionId, transactionId, _sourceAddress);
+            var message = MessageType.CreatePingMessage(ConnectionIdRaw, transactionId, _sourceAddress);
             SendMessage(message, _destinationAddress);
         }
 
         public void SendOk(byte[] transactionId)
         {
-            var message = MessageType.CreateOkMessage(_connectionId, transactionId, _sourceAddress);
+            var message = MessageType.CreateOkMessage(ConnectionIdRaw, transactionId, _sourceAddress);
             SendMessage(message, _destinationAddress);
         }
 
@@ -187,11 +168,12 @@ namespace Natter.Connecting
         {
             if (_onConnected != null)
             {
-                _onConnected();
+                var onConnected = new Task(() => _onConnected(this));
+                onConnected.Start();
             }
         }
 
-        public IConnection OnConnected(Action onConnected)
+        public NatterConnection OnConnected(Action<INatterConnection> onConnected)
         {
             _onConnected = onConnected;
             return this;
@@ -201,11 +183,12 @@ namespace Natter.Connecting
         {
             if (_onDisconnected != null)
             {
-                _onDisconnected();
+                var onDisconnected = new Task(() => _onDisconnected(this));
+                onDisconnected.Start();
             }
         }
 
-        public IConnection OnDisconnected(Action onDisconnected)
+        public NatterConnection OnDisconnected(Action<INatterConnection> onDisconnected)
         {
             _onDisconnected = onDisconnected;
             return this;
@@ -215,12 +198,12 @@ namespace Natter.Connecting
         {
             if (_onError != null)
             {
-                var onError = new Task(() => _onError(ex));
+                var onError = new Task(() => _onError(this, ex));
                 onError.Start();
             }
         }
 
-        public IConnection OnError(Action<Exception> onError)
+        public NatterConnection OnError(Action<INatterConnection, Exception> onError)
         {
             _onError = onError;
             return this;
@@ -230,25 +213,40 @@ namespace Natter.Connecting
         {
             if (_onData != null)
             {
-                var onData = new Task(() => _onData(data));
+                var onData = new Task(() => _onData(this, data));
                 onData.Start();
             }
         }
 
-        public IConnection OnData(Action<IField[]> onData)
+        public NatterConnection OnData(Action<INatterConnection, IField[]> onData)
         {
             _onData = onData;
             return this;
         }
 
-        public void Dispose()
-        {
-            _timer.Dispose();
-        }
-
         public static byte[] CreateNewId()
         {
             return Guid.NewGuid().ToString().GetBytes();
+        }
+
+        public void Dispose()
+        {
+            DisposeInternal();
+            GC.SuppressFinalize(this);
+        }
+
+        public void DisposeInternal()
+        {
+            if (!_disposed)
+            {
+                _timer.Dispose();
+            }
+            _disposed = true;
+        }
+
+        ~NatterConnection()
+        {
+            Dispose();
         }
     }
 }

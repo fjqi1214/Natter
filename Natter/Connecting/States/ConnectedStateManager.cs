@@ -66,7 +66,7 @@ namespace Natter.Connecting.States
             {
                 if (_pingTryCount == 2)
                 {
-                    _pingTransactionId = Connection.CreateNewId();
+                    _pingTransactionId = NatterConnection.CreateNewId();
                 }
                 _actions.SendPing(_pingTransactionId);
             }

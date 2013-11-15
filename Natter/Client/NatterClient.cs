@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using Natter.Byte;
 using Natter.Connecting;
 using Natter.Messaging;
 using Natter.Transporting;
@@ -9,126 +11,166 @@ namespace Natter.Client
     {
         private bool _disposed;
         private readonly ITransport _transport;
-        private readonly Connection _connection;
+        private readonly Dictionary<string, NatterConnection> _connections;
 
-        private Action _onConnected;
-        private Action _onDisconnected;
-        private Action<Exception> _onError;
-        private Action<IField[]> _onData;
-
-        public ConnectionState State
-        {
-            get { return _connection.State; }
-        }
+        private Action<INatterConnection> _onConnected;
+        private Action<INatterConnection> _onDisconnected;
+        private Action<INatterConnection, Exception> _onError;
+        private Action<INatterConnection, IField[]> _onData;
 
         protected NatterClient(ITransport transport)
         {
+            _connections = new Dictionary<string, NatterConnection>();
             _transport = transport;
-            _connection = new Connection(_transport);
-            _connection.OnConnected(OnConnected).
-                        OnDisconnected(OnDisconnected).
-                        OnError(OnError).
-                        OnData(OnData);
+            _transport.Listen(HandleMessage);
         }
 
-        private void OnConnected()
+        public INatterConnection Call(IAddress address)
         {
-            if (_onConnected != null)
+            var connection = CreateNewConnection(CreateConnectionId());
+            _connections[connection.ConnectionId] = connection;
+            connection.Call(address);
+            return connection;
+        }
+
+        private void HandleMessage(IMessage message)
+        {
+            NatterConnection connection = null;
+            try
             {
-                _onConnected();
+                var connectionId = message.ConnectionId.GetString();
+                var messageType = MessageType.Parse(message.MessageType);
+                connection = TryGetConnection(connectionId);
+                if (connection != null)
+                {
+                    connection.HandleMessage(messageType, message);
+                }
+                else if (messageType == MessageType.Start)
+                {
+                    connection = CreateNewConnection(connectionId);
+                    connection.HandleMessage(messageType, message);
+                }
+            }
+            catch (Exception ex)
+            {
+                if (connection != null)
+                {
+                    OnError(connection, ex);
+                }
             }
         }
 
-        public INatterClient OnConnected(Action onConnected)
+        private NatterConnection CreateNewConnection(string connectionId)
+        {
+            lock (_connections)
+            {
+                var connection = new NatterConnection(_transport, connectionId);
+                connection.OnConnected(OnConnected).
+                           OnDisconnected(OnDisconnected).
+                           OnData(OnData).
+                           OnError(OnError);
+
+                _connections[connection.ConnectionId] = connection;
+                return connection;
+            }
+        }
+
+        private NatterConnection TryGetConnection(string connectionId)
+        {
+            lock (_connections)
+            {
+                NatterConnection connection = null;
+                if (_connections.TryGetValue(connectionId, out connection))
+                {
+                    return connection;
+                }
+            }
+            return null;
+        }
+
+        private string CreateConnectionId()
+        {
+            return Guid.NewGuid().ToString();
+        }
+
+        private void OnConnected(INatterConnection connection)
+        {
+            if (_onConnected != null)
+            {
+                _onConnected(connection);
+            }
+        }
+
+        public INatterClient OnConnected(Action<INatterConnection> onConnected)
         {
             _onConnected = onConnected;
             return this;
         }
 
-        private void OnDisconnected()
+        private void OnDisconnected(INatterConnection connection)
         {
             if (_onDisconnected != null)
             {
-                _onDisconnected();
+                _onDisconnected(connection);
             }
         }
 
-        public INatterClient OnDisconnected(Action onDisconnected)
+        public INatterClient OnDisconnected(Action<INatterConnection> onDisconnected)
         {
             _onDisconnected = onDisconnected;
             return this;
         }
 
-        private void OnData(IField[] data)
+        private void OnData(INatterConnection connection, IField[] data)
         {
             if (_onData != null)
             {
-                _onData(data);
+                _onData(connection, data);
             }
         }
 
-        public INatterClient OnData(Action<IField[]> onData)
+        public INatterClient OnData(Action<INatterConnection, IField[]> onData)
         {
             _onData = onData;
             return this;
         }
 
-        private void OnError(Exception error)
+        private void OnError(INatterConnection connection, Exception error)
         {
             if (_onError != null)
             {
-                _onError(error);
+                _onError(connection, error);
             }
         }
 
-        public INatterClient OnError(Action<Exception> onError)
+        public INatterClient OnError(Action<INatterConnection, Exception> onError)
         {
             _onError = onError;
             return this;
         }
 
-        public void Call(IAddress address)
-        {
-            _connection.Call(address);
-        }
-
-        public void Listen()
-        {
-            _connection.Listen();
-        }
-
-        public void Send(IField[] data)
-        {
-            _connection.Send(data);
-        }
-
-        public void End()
-        {
-            _connection.End();
-        }
-
         public void Dispose()
         {
-            Dispose(true);
+            DisposeInternal();
             GC.SuppressFinalize(this);
         }
 
-        public void Dispose(bool disposing)
+        public void DisposeInternal()
         {
             if (!_disposed)
             {
-                if (disposing)
-                {
-                }
-                _connection.Dispose();
                 _transport.Dispose();
+                foreach (var connection in _connections.Values)
+                {
+                    connection.Dispose();
+                }
             }
             _disposed = true;
         }
 
         ~NatterClient()
         {
-            Dispose(false);
+            Dispose();
         }
     }
 }

@@ -45,16 +45,14 @@
     <Compile Include="Client\INatterClient.cs" />
     <Compile Include="Client\MemoryNatterClient.cs" />
     <Compile Include="Client\UdpNatterClient.cs" />
-    <Compile Include="Connecting\Connection.cs" />
+    <Compile Include="Connecting\NatterConnection.cs" />
     <Compile Include="Connecting\ConnectionState.cs" />
-    <Compile Include="Connecting\IConnection.cs" />
+    <Compile Include="Connecting\INatterConnection.cs" />
     <Compile Include="Connecting\IConnectionActions.cs" />
     <Compile Include="Connecting\States\CallingStateManager.cs" />
     <Compile Include="Connecting\States\ConnectedStateManager.cs" />
     <Compile Include="Connecting\States\DisconnectedStateManager.cs" />
     <Compile Include="Connecting\States\IStateManager.cs" />
-    <Compile Include="Connecting\States\ListeningStateManager.cs" />
-    <Compile Include="Connecting\States\NoneStateManager.cs" />
     <Compile Include="Connecting\States\StateManager.cs" />
     <Compile Include="Messaging\IField.cs" />
     <Compile Include="Messaging\IMessage.cs" />
@@ -72,7 +70,8 @@
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PreBuildEvent>$(SolutionDir)build\nuget install $(ProjectDir)packages.config -o $(SolutionDir)Packages</PreBuildEvent>
+    <PreBuildEvent>
+    </PreBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

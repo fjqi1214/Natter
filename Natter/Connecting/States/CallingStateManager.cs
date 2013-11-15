@@ -9,7 +9,7 @@ namespace Natter.Connecting.States
         private readonly IConnectionActions _actions;
         private readonly byte[] _transactionId;
         private int _tryCount;
-       
+
         public ConnectionState State
         {
             get { return ConnectionState.Calling; }
@@ -18,7 +18,7 @@ namespace Natter.Connecting.States
         public CallingStateManager(IConnectionActions actions)
         {
             _actions = actions;
-            _transactionId = Connection.CreateNewId();
+            _transactionId = NatterConnection.CreateNewId();
         }
 
         public void Start()
@@ -54,9 +54,12 @@ namespace Natter.Connecting.States
             _tryCount++;
             if (_tryCount > 3)
             {
-                throw new Exception("Timed out trying to call");
+                //throw new Exception("Timed out trying to call");
             }
-            _actions.StartCall(_transactionId);
+            if (_tryCount == 1)
+            {
+                _actions.StartCall(_transactionId);
+            }
         }
     }
 }

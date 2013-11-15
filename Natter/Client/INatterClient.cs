@@ -7,16 +7,11 @@ namespace Natter.Client
 {
     public interface INatterClient : IDisposable
     {
-        ConnectionState State { get; }
+        INatterClient OnConnected(Action<INatterConnection> onConnected);
+        INatterClient OnDisconnected(Action<INatterConnection> onDisconnected);
+        INatterClient OnError(Action<INatterConnection, Exception> onError);
+        INatterClient OnData(Action<INatterConnection, IField[]> onData);
 
-        INatterClient OnConnected(Action onConnected);
-        INatterClient OnDisconnected(Action onDisconnected);
-        INatterClient OnError(Action<Exception> onError);
-        INatterClient OnData(Action<IField[]> onData);
-
-        void Call(IAddress address);
-        void Listen();
-        void Send(IField[] data);
-        void End();
+        INatterConnection Call(IAddress address);
     }
 }

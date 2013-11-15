@@ -24,6 +24,11 @@ namespace Natter.Connecting.States
 
         public IStateManager ProcessMessage(MessageType type, IMessage message)
         {
+            if (type == MessageType.Start)
+            {
+                _actions.AnswerCall(message);
+                return new ConnectedStateManager(_actions);
+            }
             return this;
         }
 

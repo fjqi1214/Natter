@@ -6,7 +6,7 @@ namespace Natter.Connecting.States
     internal class StateManager
     {
         private readonly IConnectionActions _actions;
-        private IStateManager _currentState = new NoneStateManager();
+        private IStateManager _currentState;
         private readonly object _lockObject = new object();
 
         public ConnectionState State
@@ -23,6 +23,7 @@ namespace Natter.Connecting.States
         public StateManager(IConnectionActions actions)
         {
             _actions = actions;
+            _currentState = new DisconnectedStateManager(_actions);
         }
 
         public void Call()
@@ -30,14 +31,6 @@ namespace Natter.Connecting.States
             lock (_lockObject)
             {
                 TryUpdateState(new CallingStateManager(_actions));
-            }
-        }
-
-        public void Listen()
-        {
-            lock (_lockObject)
-            {
-                TryUpdateState(new ListeningStateManager(_actions));
             }
         }
 
