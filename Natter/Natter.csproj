@@ -44,6 +44,7 @@
     <Compile Include="Client\NatterClient.cs" />
     <Compile Include="Client\INatterClient.cs" />
     <Compile Include="Client\MemoryNatterClient.cs" />
+    <Compile Include="Client\TcpNatterClient.cs" />
     <Compile Include="Client\UdpNatterClient.cs" />
     <Compile Include="Connecting\NatterConnection.cs" />
     <Compile Include="Connecting\ConnectionState.cs" />
@@ -64,6 +65,10 @@
     <Compile Include="Transporting\IAddress.cs" />
     <Compile Include="Transporting\MemoryTransport.cs" />
     <Compile Include="Transporting\MemoryAddress.cs" />
+    <Compile Include="Transporting\TcpAddress.cs" />
+    <Compile Include="Transporting\TcpListen.cs" />
+    <Compile Include="Transporting\TcpTalk.cs" />
+    <Compile Include="Transporting\TcpTransport.cs" />
     <Compile Include="Transporting\UdpTransport.cs" />
     <Compile Include="Transporting\UdpAddress.cs" />
   </ItemGroup>

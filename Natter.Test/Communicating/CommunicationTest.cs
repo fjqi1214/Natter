@@ -54,8 +54,8 @@ namespace Natter.Test.Communicating
             _client2.OnDisconnected(c => reset2.Set());
             Send(connection1, StartNumber);
 
-            Assert.IsTrue(reset1.WaitOne(TimeSpan.FromSeconds(20)), "Failed to disconnect");
-            Assert.IsTrue(reset2.WaitOne(TimeSpan.FromSeconds(20)), "Failed to disconnect");
+            Assert.IsTrue(reset1.WaitOne(TimeSpan.FromSeconds(80)), "Failed to disconnect");
+            Assert.IsTrue(reset2.WaitOne(TimeSpan.FromSeconds(80)), "Failed to disconnect");
             Assert.AreEqual(ConnectionState.Disconnected, connection1.State, "Client not disconnected");
             Assert.AreEqual(ConnectionState.Disconnected, connection2.State, "Client not disconnected");
 
@@ -75,6 +75,8 @@ namespace Natter.Test.Communicating
             {
                 _count++;
                 _lastResult = int.Parse(data[0].Value.GetString());
+                Console.WriteLine("Last number was: {0}", _lastResult);
+
                 if (_lastResult == EndNumber)
                 {
                     connection.Close();

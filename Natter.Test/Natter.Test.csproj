@@ -44,9 +44,11 @@
   <ItemGroup>
     <Compile Include="Communicating\CommunicationTest.cs" />
     <Compile Include="Communicating\MemoryCommunicationTest.cs" />
+    <Compile Include="Communicating\TcpCommunicationTest.cs" />
     <Compile Include="Communicating\UdpCommunicationTest.cs" />
     <Compile Include="Connecting\ConnectionTest.cs" />
     <Compile Include="Connecting\MemoryConnectionTest.cs" />
+    <Compile Include="Connecting\TcpConnectionTest.cs" />
     <Compile Include="Connecting\UdpConnectionTest.cs" />
     <Compile Include="Messaging\FieldTests.cs" />
     <Compile Include="Messaging\MessageTests.cs" />
