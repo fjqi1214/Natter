@@ -16,7 +16,7 @@ namespace Natter.Client
         private Action<INatterConnection> _onConnected;
         private Action<INatterConnection> _onDisconnected;
         private Action<INatterConnection, Exception> _onError;
-        private Action<INatterConnection, IField[]> _onData;
+        private Action<INatterConnection, FieldData> _onData;
 
         protected NatterClient(ITransport transport)
         {
@@ -121,7 +121,7 @@ namespace Natter.Client
             return this;
         }
 
-        private void OnData(INatterConnection connection, IField[] data)
+        private void OnData(INatterConnection connection, FieldData data)
         {
             if (_onData != null)
             {
@@ -129,7 +129,7 @@ namespace Natter.Client
             }
         }
 
-        public INatterClient OnData(Action<INatterConnection, IField[]> onData)
+        public INatterClient OnData(Action<INatterConnection, FieldData> onData)
         {
             _onData = onData;
             return this;

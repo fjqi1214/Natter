@@ -52,7 +52,7 @@ namespace Natter.Connecting.States
             }
         }
 
-        public void Send(IField[] data)
+        public void Send(FieldData data)
         {
             lock (_lockObject)
             {

@@ -7,7 +7,7 @@ namespace Natter.Connecting
         string ConnectionId { get; }
         ConnectionState State { get; }
 
-        void Send(IField[] data);
+        void Send(FieldData data);
         void Close();
     }
 }

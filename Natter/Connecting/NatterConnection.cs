@@ -21,7 +21,7 @@ namespace Natter.Connecting
         private Action<INatterConnection> _onConnected;
         private Action<INatterConnection> _onDisconnected;
         private Action<INatterConnection, Exception> _onError;
-        private Action<INatterConnection, IField[]> _onData;
+        private Action<INatterConnection, FieldData> _onData;
 
         private const int PingPeriod = 1000;
 
@@ -69,7 +69,7 @@ namespace Natter.Connecting
             _stateManager.ProcessMessage(messageType, message);
         }
 
-        public void Send(IField[] data)
+        public void Send(FieldData data)
         {
             _stateManager.Send(data);
         }
@@ -126,11 +126,11 @@ namespace Natter.Connecting
             _transport.Send(address, message);
         }
 
-        public void SendData(IField[] data)
+        public void SendData(FieldData data)
         {
             try
             {
-                var message = MessageType.CreateDataMessage(ConnectionIdRaw, CreateNewId(), _sourceAddress, data);
+                var message = MessageType.CreateDataMessage(ConnectionIdRaw, CreateNewId(), _sourceAddress, data.GetFields());
                 SendMessage(message, _destinationAddress);
             }
             catch (Exception ex)
@@ -209,7 +209,7 @@ namespace Natter.Connecting
             return this;
         }
 
-        public void OnData(IField[] data)
+        public void OnData(FieldData data)
         {
             if (_onData != null)
             {
@@ -218,7 +218,7 @@ namespace Natter.Connecting
             }
         }
 
-        public NatterConnection OnData(Action<INatterConnection, IField[]> onData)
+        public NatterConnection OnData(Action<INatterConnection, FieldData> onData)
         {
             _onData = onData;
             return this;

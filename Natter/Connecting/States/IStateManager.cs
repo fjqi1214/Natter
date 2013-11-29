@@ -7,7 +7,7 @@ namespace Natter.Connecting.States
         ConnectionState State { get; }
         void Start();
         IStateManager ProcessMessage(MessageType type, IMessage message);
-        void Send(IField[] data);
+        void Send(FieldData data);
         void Ping();
     }
 }

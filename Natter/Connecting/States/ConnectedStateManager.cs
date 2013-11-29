@@ -30,7 +30,7 @@ namespace Natter.Connecting.States
             if (type == MessageType.Data)
             {
                 _pingTryCount = 0;
-                _actions.OnData(message.Data);
+                _actions.OnData(new FieldData(message.Data));
                 return this;
             }
             if (type == MessageType.End)
@@ -50,7 +50,7 @@ namespace Natter.Connecting.States
             return this;
         }
 
-        public void Send(IField[] data)
+        public void Send(FieldData data)
         {
             _actions.SendData(data);
         }

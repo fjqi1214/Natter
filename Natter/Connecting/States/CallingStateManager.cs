@@ -39,7 +39,7 @@ namespace Natter.Connecting.States
             return this;
         }
 
-        public void Send(IField[] data)
+        public void Send(FieldData data)
         {
             throw new Exception("Cannot send. Please connect.");
         }

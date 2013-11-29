@@ -65,16 +65,17 @@ namespace Natter.Test.Communicating
 
         private void Send(INatterConnection connection, int num)
         {
-            var data = new IField[] { new Field(DataField.GetBytes(), num.ToString().GetBytes()) };
+            var data = new FieldData();
+            data.Add(DataField, num.ToString());
             connection.Send(data);
         }
 
-        private void HandleResponse(IField[] data, INatterConnection connection)
+        private void HandleResponse(FieldData data, INatterConnection connection)
         {
-            if (data.Length == 1 && data[0].Name.GetString() == DataField)
+            if (data.ContainsKey(DataField))
             {
                 _count++;
-                _lastResult = int.Parse(data[0].Value.GetString());
+                _lastResult = int.Parse(data.GetStringValue(DataField));
                 Console.WriteLine("Last number was: {0}", _lastResult);
 
                 if (_lastResult == EndNumber)

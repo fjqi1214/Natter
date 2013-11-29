@@ -10,7 +10,7 @@ namespace Natter.Client
         INatterClient OnConnected(Action<INatterConnection> onConnected);
         INatterClient OnDisconnected(Action<INatterConnection> onDisconnected);
         INatterClient OnError(Action<INatterConnection, Exception> onError);
-        INatterClient OnData(Action<INatterConnection, IField[]> onData);
+        INatterClient OnData(Action<INatterConnection, FieldData> onData);
 
         INatterConnection Call(IAddress address);
     }

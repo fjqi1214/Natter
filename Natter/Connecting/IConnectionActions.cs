@@ -9,8 +9,8 @@ namespace Natter.Connecting
         void EndCall();
         void OnConnected();
         void OnDisconnected();
-        void OnData(IField[] transactionId);
-        void SendData(IField[] transactionId);
+        void OnData(FieldData data);
+        void SendData(FieldData data);
         void SendPing(byte[] transactionId);
         void SendOk(byte[] transactionId);
     }
