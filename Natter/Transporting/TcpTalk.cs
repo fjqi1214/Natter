@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Net;
 using System.Net.Sockets;
 using System.Threading.Tasks;
 
@@ -8,38 +9,55 @@ namespace Natter.Transporting
     {
         private readonly TcpClient _client;
         private bool _alive = true;
-        private readonly byte[] _buffer = new byte[8 * 1024];
         private int _bufferPosition;
+        private readonly byte[] _buffer = new byte[8 * 1024];
 
-        private Action<byte[]> _handleMessage;
+        private Action<byte[], TcpTalk> _handleMessage;
 
         private const int LengthBufferSize = sizeof(int);
 
-        public TcpTalk(string host, int port)
+        public TcpAddress Destination
         {
-            _client = new TcpClient();
-            _client.Connect(host, port);
+            get;
+            private set;
+        }
+
+        public TcpTalk(int port, TcpAddress destination)
+        {
+            Destination = destination;
+
+            var ipLocalEndPoint = new IPEndPoint(GetIpAddress(), port);
+            _client = new TcpClient(ipLocalEndPoint);
+            _client.LingerState.Enabled = false;
+            _client.Connect(destination.Host, destination.Port);
             ReadFromStream();
         }
 
         public TcpTalk(TcpClient client)
         {
+            var ipAddress = ((IPEndPoint)client.Client.RemoteEndPoint).Address;
+            var port = ((IPEndPoint)client.Client.RemoteEndPoint).Port;
+            Destination = new TcpAddress(ipAddress, port);
             _client = client;
+            _client.LingerState.Enabled = false;
             ReadFromStream();
         }
 
         public void SendData(byte[] data)
         {
-            var lengthPrefix = BitConverter.GetBytes(data.Length);
+            if (_alive)
+            {
+                var lengthPrefix = BitConverter.GetBytes(data.Length);
 
-            var message = new byte[lengthPrefix.Length + data.Length];
-            lengthPrefix.CopyTo(message, 0);
-            data.CopyTo(message, lengthPrefix.Length);
+                var message = new byte[lengthPrefix.Length + data.Length];
+                lengthPrefix.CopyTo(message, 0);
+                data.CopyTo(message, lengthPrefix.Length);
 
-            _client.GetStream().WriteAsync(message, 0, message.Length);
+                _client.GetStream().WriteAsync(message, 0, message.Length);
+            }
         }
 
-        public void HandleMessage(Action<byte[]> handleMessage)
+        public void HandleMessage(Action<byte[], TcpTalk> handleMessage)
         {
             _handleMessage = handleMessage;
         }
@@ -81,10 +99,23 @@ namespace Natter.Transporting
 
                     if (_handleMessage != null)
                     {
-                        _handleMessage(data);
+                        _handleMessage(data, this);
                     }
                 }
             }
+        }
+
+        private IPAddress GetIpAddress()
+        {
+            var host = Dns.GetHostEntry(Dns.GetHostName());
+            foreach (var ip in host.AddressList)
+            {
+                if (ip.AddressFamily == AddressFamily.InterNetwork)
+                {
+                    return ip;
+                }
+            }
+            return null;
         }
 
         public void Close()

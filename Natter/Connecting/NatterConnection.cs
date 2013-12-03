@@ -12,9 +12,8 @@ namespace Natter.Connecting
     internal class NatterConnection : INatterConnection, IConnectionActions, IDisposable
     {
         private readonly ITransport _transport;
+        private readonly IAddress _destination;
         private readonly StateManager _stateManager;
-        private readonly byte[] _sourceAddress;
-        private IAddress _destinationAddress;
         private readonly Timer _timer;
         private bool _disposed;
 
@@ -44,23 +43,22 @@ namespace Natter.Connecting
             private set;
         }
 
-        public NatterConnection(ITransport transport, string connectionId)
+        public NatterConnection(string connectionId, ITransport transport, IAddress destination)
         {
             _transport = transport;
+            _destination = destination;
             ConnectionId = connectionId;
             ConnectionIdRaw = connectionId.GetBytes();
             _stateManager = new StateManager(this);
-            _sourceAddress = _transport.GetAddress().Serialise().GetBytes();
             _timer = new Timer(o => Ping(), null, PingPeriod, PingPeriod);
         }
 
-        public void Call(IAddress address)
+        public void Call()
         {
             if (!StartStates.Contains(State))
             {
                 throw new Exception("Invalid start state");
             }
-            _destinationAddress = address;
             _stateManager.Call();
         }
 
@@ -83,9 +81,9 @@ namespace Natter.Connecting
         {
             try
             {
-                var message = MessageType.CreateStartMessage(ConnectionIdRaw, transactionId, _sourceAddress);
+                var message = MessageType.CreateStartMessage(ConnectionIdRaw, transactionId);
 
-                SendMessage(message, _destinationAddress);
+                SendMessage(message);
             }
             catch (Exception ex)
             {
@@ -97,9 +95,8 @@ namespace Natter.Connecting
         {
             try
             {
-                _destinationAddress = _transport.DeserialiseAddress(originalMessage.From.GetString());
-                var message = MessageType.CreateOkMessage(ConnectionIdRaw, originalMessage.TransactionId, _sourceAddress);
-                SendMessage(message, _destinationAddress);
+                var message = MessageType.CreateOkMessage(ConnectionIdRaw, originalMessage.TransactionId);
+                SendMessage(message);
             }
             catch (Exception ex)
             {
@@ -112,8 +109,8 @@ namespace Natter.Connecting
             try
             {
                 _transport.Listen(null);
-                var message = MessageType.CreateEndMessage(ConnectionIdRaw, CreateNewId(), _sourceAddress);
-                SendMessage(message, _destinationAddress);
+                var message = MessageType.CreateEndMessage(ConnectionIdRaw, CreateNewId());
+                SendMessage(message);
             }
             catch (Exception ex)
             {
@@ -121,17 +118,17 @@ namespace Natter.Connecting
             }
         }
 
-        private void SendMessage(IMessage message, IAddress address)
+        private void SendMessage(IMessage message)
         {
-            _transport.Send(address, message);
+            _transport.Send(ConnectionId, message, _destination);
         }
 
         public void SendData(FieldData data)
         {
             try
             {
-                var message = MessageType.CreateDataMessage(ConnectionIdRaw, CreateNewId(), _sourceAddress, data.GetFields());
-                SendMessage(message, _destinationAddress);
+                var message = MessageType.CreateDataMessage(ConnectionIdRaw, CreateNewId(), data.GetFields());
+                SendMessage(message);
             }
             catch (Exception ex)
             {
@@ -154,14 +151,14 @@ namespace Natter.Connecting
 
         public void SendPing(byte[] transactionId)
         {
-            var message = MessageType.CreatePingMessage(ConnectionIdRaw, transactionId, _sourceAddress);
-            SendMessage(message, _destinationAddress);
+            var message = MessageType.CreatePingMessage(ConnectionIdRaw, transactionId);
+            SendMessage(message);
         }
 
         public void SendOk(byte[] transactionId)
         {
-            var message = MessageType.CreateOkMessage(ConnectionIdRaw, transactionId, _sourceAddress);
-            SendMessage(message, _destinationAddress);
+            var message = MessageType.CreateOkMessage(ConnectionIdRaw, transactionId);
+            SendMessage(message);
         }
 
         public void OnConnected()

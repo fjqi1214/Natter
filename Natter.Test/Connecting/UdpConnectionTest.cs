@@ -13,12 +13,12 @@ namespace Natter.Test.Connecting
 
         protected override INatterClient GetClient1()
         {
-            return new UdpNatterClient(Localhost, Client1Port);
+            return new UdpNatterClient(Client1Port);
         }
 
         protected override INatterClient GetClient2()
         {
-            return new UdpNatterClient(Localhost, Client2Port);
+            return new UdpNatterClient(Client2Port);
         }
 
         protected override IAddress GetClient1Address()

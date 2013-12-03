@@ -10,17 +10,6 @@ namespace Natter.Test.Connecting
     public abstract class ConnectionTest
     {
         [Test]
-        public void Calling()
-        {
-            using (var client = GetClient2())
-            {
-                var connection = client.Call(GetClient1Address());
-
-                Assert.AreEqual(ConnectionState.Calling, connection.State, "Client not calling");
-            }
-        }
-
-        [Test]
         public void Connected()
         {
             var reset1 = new ManualResetEvent(false);

@@ -27,44 +27,47 @@ namespace Natter.Client
 
         public INatterConnection Call(IAddress address)
         {
-            var connection = CreateNewConnection(CreateConnectionId());
+            var connection = CreateNewConnection(CreateConnectionId(), address);
             _connections[connection.ConnectionId] = connection;
-            connection.Call(address);
+            connection.Call();
             return connection;
         }
 
-        private void HandleMessage(IMessage message)
+        private void HandleMessage(IMessage message, IAddress address)
         {
-            NatterConnection connection = null;
-            try
+            lock (_connections)
             {
-                var connectionId = message.ConnectionId.GetString();
-                var messageType = MessageType.Parse(message.MessageType);
-                connection = TryGetConnection(connectionId);
-                if (connection != null)
+                NatterConnection connection = null;
+                try
                 {
-                    connection.HandleMessage(messageType, message);
+                    var connectionId = message.ConnectionId.GetString();
+                    var messageType = MessageType.Parse(message.MessageType);
+                    connection = TryGetConnection(connectionId);
+                    if (connection != null)
+                    {
+                        connection.HandleMessage(messageType, message);
+                    }
+                    else if (messageType == MessageType.Start)
+                    {
+                        connection = CreateNewConnection(connectionId, address);
+                        connection.HandleMessage(messageType, message);
+                    }
                 }
-                else if (messageType == MessageType.Start)
+                catch (Exception ex)
                 {
-                    connection = CreateNewConnection(connectionId);
-                    connection.HandleMessage(messageType, message);
-                }
-            }
-            catch (Exception ex)
-            {
-                if (connection != null)
-                {
-                    OnError(connection, ex);
+                    if (connection != null)
+                    {
+                        OnError(connection, ex);
+                    }
                 }
             }
         }
 
-        private NatterConnection CreateNewConnection(string connectionId)
+        private NatterConnection CreateNewConnection(string connectionId, IAddress address)
         {
             lock (_connections)
             {
-                var connection = new NatterConnection(_transport, connectionId);
+                var connection = new NatterConnection(connectionId, _transport, address);
                 connection.OnConnected(OnConnected).
                            OnDisconnected(OnDisconnected).
                            OnData(OnData).

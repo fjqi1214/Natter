@@ -50,44 +50,44 @@ namespace Natter.Messaging
             return type;
         }
 
-        public static IMessage CreateStartMessage(byte[] connectionId, byte[] transactionId, byte[] from)
+        public static IMessage CreateStartMessage(byte[] connectionId, byte[] transactionId)
         {
             return new Message(Start.NameSerialised, 
                 connectionId, 
                 transactionId,
-                from, new IField[0]);
+                new byte[0], new IField[0]);
         }
 
-        public static IMessage CreateOkMessage(byte[] connectionId, byte[] transactionId, byte[] from)
+        public static IMessage CreateOkMessage(byte[] connectionId, byte[] transactionId)
         {
             return new Message(Ok.NameSerialised,
                 connectionId,
                 transactionId,
-                from, new IField[0]);
+                new byte[0], new IField[0]);
         }
 
-        public static IMessage CreateEndMessage(byte[] connectionId, byte[] transactionId, byte[] from)
+        public static IMessage CreateEndMessage(byte[] connectionId, byte[] transactionId)
         {
             return new Message(End.NameSerialised,
                 connectionId,
                 transactionId,
-                from, new IField[0]);
+                new byte[0], new IField[0]);
         }
 
-        public static IMessage CreatePingMessage(byte[] connectionId, byte[] transactionId, byte[] from)
+        public static IMessage CreatePingMessage(byte[] connectionId, byte[] transactionId)
         {
             return new Message(Ping.NameSerialised,
                 connectionId,
                 transactionId,
-                from, new IField[0]);
+                new byte[0], new IField[0]);
         }
 
-        public static IMessage CreateDataMessage(byte[] connectionId, byte[] transactionId, byte[] from, IField[] data)
+        public static IMessage CreateDataMessage(byte[] connectionId, byte[] transactionId, IField[] data)
         {
             return new Message(Data.NameSerialised,
                 connectionId,
                 transactionId,
-                from, 
+                new byte[0], 
                 data);
         }
 

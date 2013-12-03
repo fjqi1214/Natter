@@ -1,10 +1,14 @@
-﻿namespace Natter.Transporting
+﻿using System.Linq;
+using System.Net;
+using System.Net.Sockets;
+
+namespace Natter.Transporting
 {
     public class TcpAddress : IAddress
     {
         private readonly string _serialised;
 
-        public string Host
+        public IPAddress Host
         {
             get;
             private set;
@@ -16,7 +20,7 @@
             private set;
         }
 
-        public TcpAddress(string host, int port)
+        public TcpAddress(IPAddress host, int port)
         {
             Host = host;
             Port = port;
@@ -30,8 +34,14 @@
 
         public IAddress Deserialise(string address)
         {
-            var tokens = address.Split(new [] { ':' });
-            return new TcpAddress(tokens[0], int.Parse(tokens[1]));
+            return null;
+        }
+
+        public static IPAddress GetLocalIpAddress()
+        {
+            var host = Dns.GetHostEntry(Dns.GetHostName());
+            var endpoint = host.AddressList.FirstOrDefault(e => e.AddressFamily == AddressFamily.InterNetwork);
+            return endpoint;
         }
     }
 }

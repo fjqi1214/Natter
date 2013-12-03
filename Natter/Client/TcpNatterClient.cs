@@ -1,17 +1,18 @@
-﻿using Natter.Transporting;
+﻿using System.Net;
+using Natter.Transporting;
 
 namespace Natter.Client
 {
     public class TcpNatterClient : NatterClient
     {
-        public TcpNatterClient(string host, int port)
-            : base(new TcpTransport(new TcpAddress(host, port)))
+        public TcpNatterClient(int port)
+            : base(new TcpTransport(port))
         {
         }
 
         public void Call(string host, int port)
         {
-            Call(new TcpAddress(host, port));
+            Call(new TcpAddress(IPAddress.Parse(host), port));
         }
     }
 }

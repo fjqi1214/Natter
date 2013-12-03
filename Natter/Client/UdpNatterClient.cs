@@ -4,8 +4,8 @@ namespace Natter.Client
 {
     public class UdpNatterClient : NatterClient
     {
-        public UdpNatterClient(string host, int port)
-            : base(new UdpTransport(new UdpAddress(host, port)))
+        public UdpNatterClient(int port)
+            : base(new UdpTransport(port))
         {
         }
 

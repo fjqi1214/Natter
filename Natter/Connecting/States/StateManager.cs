@@ -1,5 +1,6 @@
 ﻿using System;
 using Natter.Messaging;
+using Natter.Transporting;
 
 namespace Natter.Connecting.States
 {
